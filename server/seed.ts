@@ -1,12 +1,10 @@
 import { db } from "./db";
-import { roles, userRoles, auditLogs } from "@shared/schema";
-import { users } from "@shared/models/auth";
+import { roles, userRoles, auditLogs, users } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
 async function seedDatabase() {
   console.log("Seeding database...");
   try {
-    // Check if roles exist
     const existingRoles = await db.select().from(roles);
     if (existingRoles.length === 0) {
       await db.insert(roles).values([
@@ -15,8 +13,6 @@ async function seedDatabase() {
         { name: "Manager", description: "Can manage other users" },
       ]);
       console.log("Seed: Roles created");
-    } else {
-      console.log("Seed: Roles already exist");
     }
     console.log("Database seeding completed.");
   } catch (err) {

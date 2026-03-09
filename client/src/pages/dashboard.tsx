@@ -97,7 +97,7 @@ export default function Dashboard() {
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
             <div className="absolute bottom-0 left-0 p-6 text-white">
               <div className="flex items-center gap-2 text-primary-foreground/80 text-sm font-medium mb-2">
-                <Zap className="h-4 w-4" /> System Online
+                <ActivitySquare className="h-4 w-4" /> System Online
               </div>
               <h3 className="text-xl font-display font-bold mb-2">Workspace Active</h3>
               <p className="text-sm text-white/70">All services are running normally. AI agent is ready to assist.</p>
