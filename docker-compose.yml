@@ -37,7 +37,7 @@ services:
       context: .
       dockerfile: services/Dockerfile.service
       args:
-        SERVICE_PATH: services/user-service/index.js
+        SERVICE_PATH: services/dist/user-service/index.js
     container_name: senior-stack-ia-user-service
     depends_on:
       postgres:
@@ -57,7 +57,7 @@ services:
       context: .
       dockerfile: services/Dockerfile.service
       args:
-        SERVICE_PATH: services/role-service/index.js
+        SERVICE_PATH: services/dist/role-service/index.js
     container_name: senior-stack-ia-role-service
     depends_on:
       postgres:
@@ -78,7 +78,7 @@ services:
       context: .
       dockerfile: services/Dockerfile.service
       args:
-        SERVICE_PATH: services/audit-service/index.js
+        SERVICE_PATH: services/dist/audit-service/index.js
     container_name: senior-stack-ia-audit-service
     depends_on:
       rabbitmq:
@@ -102,7 +102,7 @@ services:
       context: .
       dockerfile: services/Dockerfile.service
       args:
-        SERVICE_PATH: services/ai-service/index.js
+        SERVICE_PATH: services/dist/ai-service/index.js
     container_name: senior-stack-ia-ai-service
     depends_on:
       postgres:

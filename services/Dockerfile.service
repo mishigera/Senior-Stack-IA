@@ -1,11 +1,17 @@
-FROM node:20-alpine
-
+# Stage 1: build TypeScript microservices
+FROM node:20-alpine AS builder
 WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY services ./services
+RUN npx tsc -p services/tsconfig.json
 
+# Stage 2: run compiled services
+FROM node:20-alpine
+WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev
-
-COPY services ./services
+COPY --from=builder /app/services/dist ./services/dist
 
 ENV NODE_ENV=production
 ARG SERVICE_PATH

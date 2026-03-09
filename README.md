@@ -53,6 +53,21 @@ npm test              # Solo backend (node:test – 14 tests)
 npm run test:frontend # Solo frontend (vitest – 21 tests)
 ```
 
+## Microservicios (TypeScript + DDD)
+
+Los microservicios están en `services/` en **TypeScript** con **Domain-Driven Design** y **Swagger** en cada uno.
+
+- Compilar: `npm run build:services` (genera `services/dist/`).
+- Con Docker, se compilan en la imagen y se ejecutan desde `services/dist/<servicio>/index.js`.
+- Documentación Swagger por servicio:
+  - User: http://localhost:5101/docs
+  - Role: http://localhost:5102/docs
+  - Audit: http://localhost:5103/docs
+  - AI: http://localhost:5104/docs
+- Gateway (API unificada): http://localhost:8080/api-docs
+
+Detalle de capas DDD y rutas: [docs/microservices-ddd-swagger.md](docs/microservices-ddd-swagger.md).
+
 ## Notas operativas
 
 - `app` ejecuta `npm run db:push` al iniciar para alinear esquema en Postgres.
