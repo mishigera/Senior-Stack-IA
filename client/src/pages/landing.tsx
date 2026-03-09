@@ -76,7 +76,7 @@ export default function LandingPage() {
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-sm">
               <ActivitySquare className="h-4 w-4 text-white" />
             </div>
-            NexusAI
+            TokaAI
           </div>
         </div>
       </nav>
@@ -212,10 +212,10 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2 font-display font-bold text-lg text-muted-foreground">
             <ActivitySquare className="h-4 w-4" />
-            NexusAI
+            TokaAI
           </div>
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} NexusAI Technologies.
+            &copy; {new Date().getFullYear()} Toka Technologies.
           </p>
         </div>
       </footer>

@@ -93,7 +93,7 @@ export default function AgentPage() {
             <div className="h-20 w-20 bg-primary/10 rounded-full flex items-center justify-center mb-6">
               <Bot className="h-10 w-10 text-primary" />
             </div>
-            <SectionTitle className="mb-2">Nexus Agent</SectionTitle>
+            <SectionTitle className="mb-2">Toka Agent</SectionTitle>
             <p className="text-muted-foreground max-w-md">
               Your intelligent assistant. Select a conversation on the left or create a new one to start interacting.
             </p>

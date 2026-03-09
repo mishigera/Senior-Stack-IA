@@ -43,7 +43,7 @@ function Router() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-pulse flex items-center gap-3 font-display font-bold text-xl text-primary">
-          Loading NexusAI...
+          Loading TokaAI...
         </div>
       </div>
     );
