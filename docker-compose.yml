@@ -43,7 +43,7 @@ services:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/senior_stack_ia
       REDIS_URL: redis://redis:6379
@@ -63,7 +63,7 @@ services:
       postgres:
         condition: service_healthy
       rabbitmq:
-        condition: service_started
+        condition: service_healthy
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/senior_stack_ia
       RABBITMQ_URL: amqp://rabbitmq:5672
@@ -82,9 +82,9 @@ services:
     container_name: senior-stack-ia-audit-service
     depends_on:
       rabbitmq:
-        condition: service_started
+        condition: service_healthy
       mongodb:
-        condition: service_started
+        condition: service_healthy
     environment:
       AUDIT_SERVICE_PORT: 5103
       RABBITMQ_URL: amqp://rabbitmq:5672
@@ -147,6 +147,11 @@ services:
     container_name: senior-stack-ia-redis
     ports:
       - "${REDIS_HOST_PORT:-6380}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     restart: unless-stopped
 
   mongodb:
@@ -159,6 +164,11 @@ services:
       - "${MONGODB_HOST_PORT:-27018}:27017"
     volumes:
       - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     restart: unless-stopped
 
   rabbitmq:
@@ -167,6 +177,11 @@ services:
     ports:
       - "${RABBITMQ_AMQP_HOST_PORT:-5673}:5672"
       - "${RABBITMQ_MGMT_HOST_PORT:-15673}:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
     restart: unless-stopped
 
   qdrant:

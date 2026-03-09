@@ -45,10 +45,19 @@ docker compose up --build
 - `AI_CHAT_MODEL`, `AI_RAG_MODEL`, `AI_EMBEDDING_MODEL`
 - Puertos host (`APP_HOST_PORT`, `POSTGRES_HOST_PORT`, etc.)
 
+## Tests
+
+```bash
+npm run test:all      # Backend + frontend (35 tests)
+npm test              # Solo backend (node:test – 14 tests)
+npm run test:frontend # Solo frontend (vitest – 21 tests)
+```
+
 ## Notas operativas
 
 - `app` ejecuta `npm run db:push` al iniciar para alinear esquema en Postgres.
 - Sin API key de OpenAI, los endpoints IA responden `503` controlado (no se cae la plataforma).
+- Passwords hasheados con `scrypt` (crypto nativo Node.js) y nunca expuestos en respuestas API.
 
 ## Entregables de la prueba
 

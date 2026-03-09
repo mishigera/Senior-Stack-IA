@@ -34,8 +34,20 @@ export function getSession() {
   });
 }
 
-function hashPassword(password: string) {
-  return crypto.createHash("sha256").update(password).digest("hex");
+const SCRYPT_KEYLEN = 64;
+const SCRYPT_SALT_LEN = 16;
+
+function hashPassword(password: string): string {
+  const salt = crypto.randomBytes(SCRYPT_SALT_LEN).toString("hex");
+  const derived = crypto.scryptSync(password, salt, SCRYPT_KEYLEN).toString("hex");
+  return `${salt}:${derived}`;
+}
+
+function verifyPassword(password: string, stored: string): boolean {
+  const [salt, hash] = stored.split(":");
+  if (!salt || !hash) return false;
+  const derived = crypto.scryptSync(password, salt, SCRYPT_KEYLEN).toString("hex");
+  return crypto.timingSafeEqual(Buffer.from(hash, "hex"), Buffer.from(derived, "hex"));
 }
 
 export async function setupAuth(app: Express) {
@@ -47,7 +59,7 @@ export async function setupAuth(app: Express) {
     new LocalStrategy(async (username, password, done) => {
       try {
         const user = await authStorage.getUserByUsername(username);
-        if (!user || user.password !== hashPassword(password)) {
+        if (!user || !user.password || !verifyPassword(password, user.password)) {
           return done(null, false, { message: "Invalid username or password" });
         }
         return done(null, user);

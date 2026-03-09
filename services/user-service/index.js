@@ -52,7 +52,7 @@ app.get("/users", requireActor, async (_req, res) => {
 
     const result = await pool.query(
       `
-      SELECT id, username, password, email, first_name, last_name, profile_image_url, created_at, updated_at
+      SELECT id, username, email, first_name, last_name, profile_image_url, created_at, updated_at
       FROM users
       ORDER BY created_at DESC
       `,
@@ -79,7 +79,7 @@ app.get("/users/:id", requireActor, async (req, res) => {
 
     const result = await pool.query(
       `
-      SELECT id, username, password, email, first_name, last_name, profile_image_url, created_at, updated_at
+      SELECT id, username, email, first_name, last_name, profile_image_url, created_at, updated_at
       FROM users
       WHERE id = $1
       LIMIT 1

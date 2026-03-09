@@ -20,7 +20,6 @@ test("mapUserRow maps snake_case DB row into frontend shape", () => {
   assert.deepEqual(mapped, {
     id: "u-1",
     username: "john",
-    password: "hash",
     email: "john@example.com",
     firstName: "John",
     lastName: "Doe",
@@ -28,4 +27,6 @@ test("mapUserRow maps snake_case DB row into frontend shape", () => {
     createdAt: "2026-03-09T00:00:00.000Z",
     updatedAt: "2026-03-09T00:00:00.000Z",
   });
+
+  assert.equal(mapped.password, undefined, "password must never be exposed in API responses");
 });
