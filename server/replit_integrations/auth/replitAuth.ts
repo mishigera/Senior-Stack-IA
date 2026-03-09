@@ -12,6 +12,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "your-distributed-secret-key";
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
+  const secureCookie = process.env.SESSION_COOKIE_SECURE === "true";
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
     conString: process.env.DATABASE_URL,
@@ -26,7 +27,8 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: secureCookie,
+      sameSite: secureCookie ? "none" : "lax",
       maxAge: sessionTtl,
     },
   });

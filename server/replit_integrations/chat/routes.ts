@@ -2,10 +2,25 @@ import type { Express, Request, Response } from "express";
 import OpenAI from "openai";
 import { chatStorage } from "./storage";
 
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+let openaiClient: OpenAI | null | undefined;
+
+function getOpenAIClient(): OpenAI | null {
+  if (openaiClient !== undefined) {
+    return openaiClient;
+  }
+
+  if (!process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
+    openaiClient = null;
+    return openaiClient;
+  }
+
+  openaiClient = new OpenAI({
+    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+    baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+  });
+
+  return openaiClient;
+}
 
 export function registerChatRoutes(app: Express): void {
   // Get all conversations
@@ -64,6 +79,13 @@ export function registerChatRoutes(app: Express): void {
     try {
       const conversationId = parseInt(req.params.id);
       const { content } = req.body;
+
+      const openai = getOpenAIClient();
+      if (!openai) {
+        return res.status(503).json({
+          error: "AI integration is not configured. Set AI_INTEGRATIONS_OPENAI_API_KEY to enable chat responses.",
+        });
+      }
 
       // Save user message
       await chatStorage.createMessage(conversationId, "user", content);

@@ -1,10 +1,17 @@
 import type { Express, Request, Response } from "express";
-import { openai } from "./client";
+import { getOpenAIClient } from "./client";
 
 export function registerImageRoutes(app: Express): void {
   app.post("/api/generate-image", async (req: Request, res: Response) => {
     try {
       const { prompt, size = "1024x1024" } = req.body;
+
+      const openai = getOpenAIClient();
+      if (!openai) {
+        return res.status(503).json({
+          error: "AI integration is not configured. Set AI_INTEGRATIONS_OPENAI_API_KEY to enable image generation.",
+        });
+      }
 
       if (!prompt) {
         return res.status(400).json({ error: "Prompt is required" });

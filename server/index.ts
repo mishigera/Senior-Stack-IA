@@ -22,15 +22,19 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 
-export function log(message: string, source = "express") {
-  const formattedTime = new Date().toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true,
-  });
-
-  console.log(`${formattedTime} [${source}] ${message}`);
+export function log(
+  message: string,
+  source = "express",
+  metadata?: Record<string, unknown>,
+) {
+  console.log(
+    JSON.stringify({
+      timestamp: new Date().toISOString(),
+      source,
+      message,
+      ...metadata,
+    }),
+  );
 }
 
 app.use((req, res, next) => {
@@ -47,12 +51,19 @@ app.use((req, res, next) => {
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
+      const responseType = Array.isArray(capturedJsonResponse)
+        ? "array"
+        : capturedJsonResponse
+          ? "object"
+          : undefined;
 
-      log(logLine);
+      log("request_completed", "http", {
+        method: req.method,
+        path,
+        statusCode: res.statusCode,
+        durationMs: duration,
+        responseType,
+      });
     }
   });
 
@@ -66,7 +77,17 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    console.error("Internal Server Error:", err);
+    console.error(
+      JSON.stringify({
+        timestamp: new Date().toISOString(),
+        source: "express",
+        level: "error",
+        message: "internal_server_error",
+        status,
+        error: err?.message,
+        stack: err?.stack,
+      }),
+    );
 
     if (res.headersSent) {
       return next(err);

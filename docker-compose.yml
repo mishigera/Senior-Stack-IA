@@ -1,0 +1,184 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: senior-stack-ia-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+      role-service:
+        condition: service_started
+      audit-service:
+        condition: service_started
+      ai-service:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/senior_stack_ia
+      JWT_SECRET: change-me-jwt
+      SESSION_SECRET: change-me-session
+      SESSION_COOKIE_SECURE: "false"
+      USER_SERVICE_URL: http://user-service:5101
+      ROLE_SERVICE_URL: http://role-service:5102
+      AUDIT_SERVICE_URL: http://audit-service:5103
+      AI_SERVICE_URL: http://ai-service:5104
+      AI_INTEGRATIONS_OPENAI_API_KEY: ${AI_INTEGRATIONS_OPENAI_API_KEY:-}
+      AI_INTEGRATIONS_OPENAI_BASE_URL: ${AI_INTEGRATIONS_OPENAI_BASE_URL:-https://api.openai.com/v1}
+    ports:
+      - "${APP_HOST_PORT:-8080}:5000"
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: .
+      dockerfile: services/Dockerfile.service
+      args:
+        SERVICE_PATH: services/user-service/index.js
+    container_name: senior-stack-ia-user-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/senior_stack_ia
+      REDIS_URL: redis://redis:6379
+      USER_SERVICE_PORT: 5101
+    ports:
+      - "${USER_SERVICE_HOST_PORT:-5101}:5101"
+    restart: unless-stopped
+
+  role-service:
+    build:
+      context: .
+      dockerfile: services/Dockerfile.service
+      args:
+        SERVICE_PATH: services/role-service/index.js
+    container_name: senior-stack-ia-role-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/senior_stack_ia
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      ROLE_SERVICE_PORT: 5102
+      AUDIT_EXCHANGE: audit.events
+    ports:
+      - "${ROLE_SERVICE_HOST_PORT:-5102}:5102"
+    restart: unless-stopped
+
+  audit-service:
+    build:
+      context: .
+      dockerfile: services/Dockerfile.service
+      args:
+        SERVICE_PATH: services/audit-service/index.js
+    container_name: senior-stack-ia-audit-service
+    depends_on:
+      rabbitmq:
+        condition: service_started
+      mongodb:
+        condition: service_started
+    environment:
+      AUDIT_SERVICE_PORT: 5103
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      AUDIT_EXCHANGE: audit.events
+      AUDIT_QUEUE: audit.logs
+      MONGODB_URL: mongodb://admin:admin@mongodb:27017
+      MONGODB_DB: senior_stack_ia
+      MONGODB_AUDIT_COLLECTION: audit_logs
+    ports:
+      - "${AUDIT_SERVICE_HOST_PORT:-5103}:5103"
+    restart: unless-stopped
+
+  ai-service:
+    build:
+      context: .
+      dockerfile: services/Dockerfile.service
+      args:
+        SERVICE_PATH: services/ai-service/index.js
+    container_name: senior-stack-ia-ai-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+    environment:
+      AI_SERVICE_PORT: 5104
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/senior_stack_ia
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_COLLECTION: knowledge_base
+      AI_INTEGRATIONS_OPENAI_API_KEY: ${AI_INTEGRATIONS_OPENAI_API_KEY:-}
+      AI_INTEGRATIONS_OPENAI_BASE_URL: ${AI_INTEGRATIONS_OPENAI_BASE_URL:-https://api.openai.com/v1}
+      AI_CHAT_MODEL: ${AI_CHAT_MODEL:-gpt-4.1-mini}
+      AI_RAG_MODEL: ${AI_RAG_MODEL:-gpt-4.1-mini}
+      AI_EMBEDDING_MODEL: ${AI_EMBEDDING_MODEL:-text-embedding-3-small}
+    ports:
+      - "${AI_SERVICE_HOST_PORT:-5104}:5104"
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: senior-stack-ia-postgres
+    environment:
+      POSTGRES_DB: senior_stack_ia
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "${POSTGRES_HOST_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d senior_stack_ia"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: senior-stack-ia-redis
+    ports:
+      - "${REDIS_HOST_PORT:-6380}:6379"
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:7
+    container_name: senior-stack-ia-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+    ports:
+      - "${MONGODB_HOST_PORT:-27018}:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: senior-stack-ia-rabbitmq
+    ports:
+      - "${RABBITMQ_AMQP_HOST_PORT:-5673}:5672"
+      - "${RABBITMQ_MGMT_HOST_PORT:-15673}:15672"
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:v1.13.2
+    container_name: senior-stack-ia-qdrant
+    ports:
+      - "${QDRANT_HOST_PORT:-6333}:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  mongo_data:
+  qdrant_data:
