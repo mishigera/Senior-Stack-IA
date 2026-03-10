@@ -12,26 +12,32 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { ActivitySquare, ShieldCheck, Users as UsersIcon, ArrowRight } from "lucide-react";
+import { ActivitySquare, ShieldCheck, Users as UsersIcon, CircleAlert } from "lucide-react";
 
 const authSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  email: z.string().email("Invalid email").optional(),
+  email: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.string().email("Invalid email").optional()
+  ),
 });
 
 export default function LandingPage() {
   const [isLogin, setIsLogin] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
   const { user, isLoading } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof authSchema>>({
     resolver: zodResolver(authSchema),
+    shouldUnregister: true,
     defaultValues: {
       username: "",
       password: "",
@@ -44,20 +50,54 @@ export default function LandingPage() {
     return null;
   }
 
+  const handleAuthModeToggle = () => {
+    setIsLogin((current) => !current);
+    setAuthError(null);
+    form.clearErrors();
+    form.resetField("email", { defaultValue: "" });
+  };
+
   const onSubmit = async (values: z.infer<typeof authSchema>) => {
-    console.log("Submitting form with values:", values);
+    setAuthError(null);
+
+    if (!isLogin && !values.email?.trim()) {
+      form.setError("email", {
+        type: "manual",
+        message: "Email is required",
+      });
+      return;
+    }
+
     try {
       const endpoint = isLogin ? "/api/login" : "/api/register";
+      const payload = isLogin
+        ? {
+            username: values.username.trim(),
+            password: values.password,
+          }
+        : {
+            username: values.username.trim(),
+            password: values.password,
+            email: values.email?.trim(),
+          };
+
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify(payload),
         credentials: "include",
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || "Authentication failed");
+        const data = await res.json().catch(() => null);
+        const message = data?.message || "Authentication failed";
+
+        if (isLogin && res.status === 401) {
+          setAuthError("Usuario o contraseña incorrectos. Verifica tus datos e inténtalo de nuevo.");
+          return;
+        }
+
+        throw new Error(message);
       }
 
       window.location.reload();
@@ -114,6 +154,13 @@ export default function LandingPage() {
               <CardContent>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    {authError && (
+                      <Alert variant="destructive" className="border-destructive/40 bg-destructive/5">
+                        <CircleAlert className="h-4 w-4" />
+                        <AlertTitle>Credenciales inválidas</AlertTitle>
+                        <AlertDescription>{authError}</AlertDescription>
+                      </Alert>
+                    )}
                     <FormField
                       control={form.control}
                       name="username"
@@ -121,7 +168,14 @@ export default function LandingPage() {
                         <FormItem>
                           <FormLabel>Username</FormLabel>
                           <FormControl>
-                            <Input placeholder="johndoe" {...field} />
+                            <Input
+                              placeholder="johndoe"
+                              {...field}
+                              onChange={(event) => {
+                                setAuthError(null);
+                                field.onChange(event);
+                              }}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -149,7 +203,15 @@ export default function LandingPage() {
                         <FormItem>
                           <FormLabel>Password</FormLabel>
                           <FormControl>
-                            <Input type="password" placeholder="••••••••" {...field} />
+                            <Input
+                              type="password"
+                              placeholder="••••••••"
+                              {...field}
+                              onChange={(event) => {
+                                setAuthError(null);
+                                field.onChange(event);
+                              }}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -162,7 +224,8 @@ export default function LandingPage() {
                 </Form>
                 <div className="mt-6 text-center">
                   <button
-                    onClick={() => setIsLogin(!isLogin)}
+                    type="button"
+                    onClick={handleAuthModeToggle}
                     className="text-sm text-primary hover:underline font-medium"
                   >
                     {isLogin ? "Don't have an account? Register" : "Already have an account? Sign In"}

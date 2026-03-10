@@ -41,7 +41,7 @@ export function AppSidebar() {
   const [location] = useLocation();
   const { user, logout } = useAuth();
   const { state } = useSidebar();
-
+  
   const getInitials = (name?: string) => name ? name.substring(0, 2).toUpperCase() : "U";
 
   return (
@@ -95,13 +95,13 @@ export function AppSidebar() {
             <Avatar className="h-9 w-9 ring-2 ring-background shadow-sm">
               <AvatarImage src={user.profileImageUrl || undefined} />
               <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                {getInitials(user.firstName || user.email)}
+                {getInitials(((user as { username?: string }).username || user.email || undefined)?.toString())}
               </AvatarFallback>
             </Avatar>
             {state !== "collapsed" && (
               <div className="flex flex-col truncate">
                 <span className="text-sm font-medium leading-none truncate">
-                  {(user as { username?: string }).username ?? user.firstName ? `${user.firstName} ${user.lastName ?? ""}`.trim() : user.email}
+                  {(user as { username?: string }).username ?? user.email ?? "User"}
                 </span>
                 <span className="text-xs text-muted-foreground truncate">{user.email ?? (user as { username?: string }).username}</span>
               </div>
