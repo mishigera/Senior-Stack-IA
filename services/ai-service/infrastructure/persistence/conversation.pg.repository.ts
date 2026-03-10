@@ -1,55 +1,131 @@
 import type { Pool } from "pg";
+import { asc, desc, eq } from "drizzle-orm";
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
+import { integer, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 import type { IConversationRepository } from "../../domain/conversation.repository.js";
 import type { Conversation, ConversationWithMessages } from "../../domain/conversation.entity.js";
 
+const conversationsTable = pgTable("conversations", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+const messagesTable = pgTable("messages", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversation_id").notNull(),
+  role: text("role").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+function toIso(value: Date | string): string {
+  return value instanceof Date ? value.toISOString() : String(value);
+}
+
 export class ConversationPgRepository implements IConversationRepository {
-  constructor(private readonly pool: Pool) {}
+  private readonly db: NodePgDatabase;
+
+  constructor(pool: Pool) {
+    this.db = drizzle(pool);
+  }
 
   async findAll(): Promise<Conversation[]> {
-    const result = await this.pool.query<{ id: number; title: string; createdAt: string }>(
-      `SELECT id, title, created_at AS "createdAt" FROM conversations ORDER BY created_at DESC`,
-    );
-    return result.rows;
+    const rows = await this.db
+      .select({
+        id: conversationsTable.id,
+        title: conversationsTable.title,
+        createdAt: conversationsTable.createdAt,
+      })
+      .from(conversationsTable)
+      .orderBy(desc(conversationsTable.createdAt));
+
+    return rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      createdAt: toIso(row.createdAt),
+    }));
   }
 
   async findById(id: number): Promise<ConversationWithMessages | null> {
-    const convResult = await this.pool.query<{ id: number; title: string; createdAt: string }>(
-      `SELECT id, title, created_at AS "createdAt" FROM conversations WHERE id = $1 LIMIT 1`,
-      [id],
-    );
-    if (convResult.rowCount === 0) return null;
-    const msgResult = await this.pool.query<{ id: number; conversationId: number; role: string; content: string; createdAt: string }>(
-      `SELECT id, conversation_id AS "conversationId", role, content, created_at AS "createdAt" FROM messages WHERE conversation_id = $1 ORDER BY created_at ASC`,
-      [id],
-    );
-    return { ...convResult.rows[0], messages: msgResult.rows };
+    const [conversation] = await this.db
+      .select({
+        id: conversationsTable.id,
+        title: conversationsTable.title,
+        createdAt: conversationsTable.createdAt,
+      })
+      .from(conversationsTable)
+      .where(eq(conversationsTable.id, id))
+      .limit(1);
+
+    if (!conversation) return null;
+
+    const messageRows = await this.db
+      .select({
+        id: messagesTable.id,
+        conversationId: messagesTable.conversationId,
+        role: messagesTable.role,
+        content: messagesTable.content,
+        createdAt: messagesTable.createdAt,
+      })
+      .from(messagesTable)
+      .where(eq(messagesTable.conversationId, id))
+      .orderBy(asc(messagesTable.createdAt));
+
+    return {
+      id: conversation.id,
+      title: conversation.title,
+      createdAt: toIso(conversation.createdAt),
+      messages: messageRows.map((message) => ({
+        id: message.id,
+        conversationId: message.conversationId,
+        role: message.role,
+        content: message.content,
+        createdAt: toIso(message.createdAt),
+      })),
+    };
   }
 
   async create(title: string): Promise<Conversation> {
-    const result = await this.pool.query<{ id: number; title: string; createdAt: string }>(
-      `INSERT INTO conversations (title) VALUES ($1) RETURNING id, title, created_at AS "createdAt"`,
-      [title],
-    );
-    return result.rows[0];
+    const [conversation] = await this.db
+      .insert(conversationsTable)
+      .values({ title })
+      .returning({
+        id: conversationsTable.id,
+        title: conversationsTable.title,
+        createdAt: conversationsTable.createdAt,
+      });
+
+    if (!conversation) {
+      throw new Error("Failed to create conversation");
+    }
+
+    return {
+      id: conversation.id,
+      title: conversation.title,
+      createdAt: toIso(conversation.createdAt),
+    };
   }
 
   async delete(id: number): Promise<void> {
-    await this.pool.query("DELETE FROM messages WHERE conversation_id = $1", [id]);
-    await this.pool.query("DELETE FROM conversations WHERE id = $1", [id]);
+    await this.db.transaction(async (tx) => {
+      await tx.delete(messagesTable).where(eq(messagesTable.conversationId, id));
+      await tx.delete(conversationsTable).where(eq(conversationsTable.id, id));
+    });
   }
 
   async addMessage(conversationId: number, role: string, content: string): Promise<void> {
-    await this.pool.query(
-      `INSERT INTO messages (conversation_id, role, content) VALUES ($1, $2, $3)`,
-      [conversationId, role, content],
-    );
+    await this.db.insert(messagesTable).values({ conversationId, role, content });
   }
 
   async getMessages(conversationId: number): Promise<{ role: string; content: string }[]> {
-    const result = await this.pool.query<{ role: string; content: string }>(
-      `SELECT role, content FROM messages WHERE conversation_id = $1 ORDER BY created_at ASC`,
-      [conversationId],
-    );
-    return result.rows;
+    return this.db
+      .select({
+        role: messagesTable.role,
+        content: messagesTable.content,
+      })
+      .from(messagesTable)
+      .where(eq(messagesTable.conversationId, conversationId))
+      .orderBy(asc(messagesTable.createdAt));
   }
 }

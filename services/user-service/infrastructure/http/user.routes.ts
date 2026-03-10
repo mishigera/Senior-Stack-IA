@@ -1,17 +1,10 @@
-import type { Express, Request, Response } from "express";
+import type { Express } from "express";
 import type { ListUsersUseCase } from "../../application/list-users.use-case.js";
 import type { GetUserByIdUseCase } from "../../application/get-user-by-id.use-case.js";
+import { requireDistributedJwt } from "../../../lib/distributed-auth.js";
 
 const SOURCE = "user-service";
-
-function requireActor(req: Request, res: Response, next: () => void): void {
-  const actorUserId = req.header("x-actor-user-id");
-  if (!actorUserId) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
-  next();
-}
+const requireActor = requireDistributedJwt(SOURCE);
 
 export function registerUserRoutes(
   app: Express,

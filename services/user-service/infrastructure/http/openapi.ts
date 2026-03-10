@@ -37,11 +37,11 @@ export const userServiceOpenApi = {
         summary: "Listar usuarios",
         parameters: [
           {
-            name: "x-actor-user-id",
+            name: "Authorization",
             in: "header",
             required: true,
             schema: { type: "string" },
-            description: "ID del usuario autenticado",
+            description: "Bearer JWT distribuido (Authorization: Bearer <token>)",
           },
         ],
         responses: {
@@ -56,7 +56,7 @@ export const userServiceOpenApi = {
               },
             },
           },
-          "401": { description: "Falta x-actor-user-id" },
+          "401": { description: "Falta Authorization Bearer token" },
           "500": { description: "Error interno" },
         },
       },
@@ -65,7 +65,7 @@ export const userServiceOpenApi = {
       get: {
         summary: "Obtener usuario por ID",
         parameters: [
-          { name: "x-actor-user-id", in: "header", required: true, schema: { type: "string" } },
+          { name: "Authorization", in: "header", required: true, schema: { type: "string" }, description: "Bearer JWT distribuido" },
           { name: "id", in: "path", required: true, schema: { type: "string" } },
         ],
         responses: {

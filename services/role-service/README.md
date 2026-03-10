@@ -12,7 +12,7 @@ Microservicio de gestión de roles del bounded context **Identity/Access**. Admi
 
 - `domain/`: entidades y puertos (`Role`, `IRoleRepository`, `IAuditEventPublisher`).
 - `application/`: casos de uso (`ListRolesUseCase`, `CreateRoleUseCase`, `AssignRoleToUserUseCase`).
-- `infrastructure/`: Postgres, publisher RabbitMQ, rutas HTTP y OpenAPI.
+- `infrastructure/`: Postgres (Drizzle ORM), publisher RabbitMQ, rutas HTTP y OpenAPI.
 - `index.ts`: composición y arranque del servicio.
 
 ## Endpoints
@@ -20,9 +20,9 @@ Microservicio de gestión de roles del bounded context **Identity/Access**. Admi
 | Método | Ruta | Descripción |
 |---|---|---|
 | GET | `/health` | Estado del servicio |
-| GET | `/roles` | Lista roles (requiere `x-actor-user-id`) |
-| POST | `/roles` | Crea rol (requiere `x-actor-user-id`) |
-| POST | `/users/:userId/roles` | Asigna rol a usuario (requiere `x-actor-user-id`) |
+| GET | `/roles` | Lista roles (requiere `Authorization: Bearer <jwt>`) |
+| POST | `/roles` | Crea rol (requiere `Authorization: Bearer <jwt>`) |
+| POST | `/users/:userId/roles` | Asigna rol a usuario (requiere `Authorization: Bearer <jwt>`) |
 
 Swagger: `http://localhost:5102/docs`
 
@@ -33,6 +33,7 @@ Swagger: `http://localhost:5102/docs`
 | `DATABASE_URL` | Sí | — | Conexión a Postgres |
 | `RABBITMQ_URL` | No | `amqp://rabbitmq:5672` | Broker para eventos de auditoría |
 | `AUDIT_EXCHANGE` | No | `audit.events` | Exchange topic de auditoría |
+| `JWT_SECRET` | Sí | `your-distributed-secret-key` | Validación de JWT distribuido |
 | `ROLE_SERVICE_PORT` | No | `5102` | Puerto principal del servicio |
 | `PORT` | No | `5102` | Fallback de puerto |
 
@@ -44,6 +45,7 @@ npm run db:push
 DATABASE_URL=postgres://postgres:postgres@localhost:5433/senior_stack_ia \
 RABBITMQ_URL=amqp://localhost:5673 \
 AUDIT_EXCHANGE=audit.events \
+JWT_SECRET=change-me-jwt \
 ROLE_SERVICE_PORT=5102 \
 npx tsx services/role-service/index.ts
 ```
@@ -55,6 +57,7 @@ npm run build:services
 DATABASE_URL=postgres://postgres:postgres@localhost:5433/senior_stack_ia \
 RABBITMQ_URL=amqp://localhost:5673 \
 AUDIT_EXCHANGE=audit.events \
+JWT_SECRET=change-me-jwt \
 ROLE_SERVICE_PORT=5102 \
 node services/dist/role-service/index.js
 ```

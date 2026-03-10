@@ -50,7 +50,7 @@ docker compose up --build
 ```bash
 npm run test:all      # Backend + frontend
 npm test              # Solo backend (node:test – 14 tests)
-npm run test:frontend # Solo frontend (vitest – 30 tests)
+npm run test:frontend # Solo frontend (vitest – 39 tests)
 npm run test:coverage # Cobertura backend + frontend (reportes en coverage/)
 ```
 
@@ -66,6 +66,9 @@ npm run test:coverage # Cobertura backend + frontend (reportes en coverage/)
 Los microservicios están en `services/` en **TypeScript** con **Domain-Driven Design** y **Swagger** en cada uno.
 
 - Compilar: `npm run build:services` (genera `services/dist/`).
+- Persistencia SQL con **Drizzle ORM** en `user-service`, `role-service` y `ai-service`.
+- Autenticación distribuida entre gateway y servicios con **JWT Bearer**.
+- Cada microservicio tiene su propio `Dockerfile` en `services/<servicio>/Dockerfile`.
 - Con Docker, se compilan en la imagen y se ejecutan desde `services/dist/<servicio>/index.js`.
 - Documentación Swagger por servicio:
   - User: http://localhost:5101/docs

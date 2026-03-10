@@ -16,7 +16,7 @@ export const roleServiceOpenApi = {
     "/roles": {
       get: {
         summary: "Listar roles",
-        parameters: [{ name: "x-actor-user-id", in: "header", required: true, schema: { type: "string" } }],
+        parameters: [{ name: "Authorization", in: "header", required: true, schema: { type: "string" }, description: "Bearer JWT distribuido" }],
         responses: {
           "200": {
             description: "Lista de roles",
@@ -28,7 +28,7 @@ export const roleServiceOpenApi = {
       },
       post: {
         summary: "Crear rol",
-        parameters: [{ name: "x-actor-user-id", in: "header", required: true, schema: { type: "string" } }],
+        parameters: [{ name: "Authorization", in: "header", required: true, schema: { type: "string" }, description: "Bearer JWT distribuido" }],
         requestBody: {
           required: true,
           content: {
@@ -50,7 +50,7 @@ export const roleServiceOpenApi = {
       post: {
         summary: "Asignar rol a usuario",
         parameters: [
-          { name: "x-actor-user-id", in: "header", required: true, schema: { type: "string" } },
+          { name: "Authorization", in: "header", required: true, schema: { type: "string" }, description: "Bearer JWT distribuido" },
           { name: "userId", in: "path", required: true, schema: { type: "string" } },
         ],
         requestBody: {

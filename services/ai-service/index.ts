@@ -1,4 +1,4 @@
-import express, { type Request, Response } from "express";
+import express from "express";
 import pg from "pg";
 import OpenAI from "openai";
 import { randomUUID } from "crypto";
@@ -9,6 +9,7 @@ import { ConversationPgRepository } from "./infrastructure/persistence/conversat
 import { buildRagSystemPrompt, buildRagUserPrompt, type RagContextDocument } from "./domain/rag-prompt.js";
 import { validateRagResponse } from "./domain/rag-response-quality.js";
 import { aiServiceOpenApi } from "./infrastructure/http/openapi.js";
+import { requireDistributedJwt } from "../lib/distributed-auth.js";
 
 const SOURCE = "ai-service";
 const port = parseInt(process.env.AI_SERVICE_PORT ?? process.env.PORT ?? "5104", 10);
@@ -19,7 +20,7 @@ const embeddingModel = process.env.AI_EMBEDDING_MODEL ?? "text-embedding-3-small
 const chatModel = process.env.AI_CHAT_MODEL ?? "gpt-4.1-mini";
 const ragModel = process.env.AI_RAG_MODEL ?? "gpt-4.1-mini";
 
-let openaiClient: OpenAI | null = null;
+let openaiClient: OpenAI | null | undefined;
 function getOpenAI(): OpenAI | null {
   if (openaiClient !== undefined) return openaiClient;
   if (!process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
@@ -59,13 +60,7 @@ const repo = new ConversationPgRepository(pool);
 const ragDocumentSchema = z.object({ id: z.string().optional(), text: z.string().min(1), metadata: z.record(z.any()).optional() });
 const ragQuerySchema = z.object({ query: z.string().min(1), topK: z.number().int().positive().max(10).optional() });
 
-function requireActor(req: Request, res: Response, next: () => void): void {
-  if (!req.header("x-actor-user-id")) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
-  next();
-}
+const requireActor = requireDistributedJwt(SOURCE);
 
 function paramId(v: string | string[] | undefined): number {
   const id = Array.isArray(v) ? v[0] : v;

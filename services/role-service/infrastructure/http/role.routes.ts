@@ -1,21 +1,15 @@
-import type { Express, Request, Response } from "express";
+import type { Express } from "express";
 import { z } from "zod";
 import type { ListRolesUseCase } from "../../application/list-roles.use-case.js";
 import type { CreateRoleUseCase } from "../../application/create-role.use-case.js";
 import type { AssignRoleToUserUseCase } from "../../application/assign-role-to-user.use-case.js";
 import { AssignRoleError } from "../../application/assign-role-to-user.use-case.js";
+import { getActorUserId, requireDistributedJwt } from "../../../lib/distributed-auth.js";
 
 const SOURCE = "role-service";
 const createRoleSchema = z.object({ name: z.string().min(1), description: z.string().optional().nullable() });
 const assignRoleSchema = z.object({ roleId: z.number().int().positive() });
-
-function requireActor(req: Request, res: Response, next: () => void): void {
-  if (!req.header("x-actor-user-id")) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
-  next();
-}
+const requireActor = requireDistributedJwt(SOURCE);
 
 export function registerRoleRoutes(
   app: Express,
@@ -41,7 +35,7 @@ export function registerRoleRoutes(
   app.post("/roles", requireActor, async (req, res) => {
     try {
       const input = createRoleSchema.parse(req.body);
-      const actorUserId = req.header("x-actor-user-id") ?? undefined;
+      const actorUserId = getActorUserId(req);
       const role = await createRole.execute(
         { name: input.name, description: input.description ?? null },
         actorUserId,
@@ -67,7 +61,7 @@ export function registerRoleRoutes(
       const rawUserId = req.params.userId;
       const userId = typeof rawUserId === "string" ? rawUserId : (Array.isArray(rawUserId) ? rawUserId[0] : "");
       const { roleId } = assignRoleSchema.parse(req.body);
-      const actorUserId = req.header("x-actor-user-id") ?? undefined;
+      const actorUserId = getActorUserId(req);
       await assignRoleToUser.execute(userId, roleId, actorUserId);
       res.status(200).json({ message: "Role assigned successfully" });
     } catch (err) {

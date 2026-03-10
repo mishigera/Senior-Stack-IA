@@ -16,7 +16,7 @@ Cada microservicio sigue capas claras:
 |------|-----------|
 | Domain | `User`, `UserPublic`, `IUserRepository` |
 | Application | `ListUsersUseCase`, `GetUserByIdUseCase` |
-| Infrastructure | `UserPgRepository`, `CachedUserRepository` (Redis), rutas HTTP, OpenAPI |
+| Infrastructure | `UserPgRepository` (Drizzle + Postgres), `CachedUserRepository` (Redis), rutas HTTP, OpenAPI |
 
 - **Swagger:** `http://localhost:5101/docs`
 
@@ -26,7 +26,7 @@ Cada microservicio sigue capas claras:
 |------|-----------|
 | Domain | `Role`, `AuditDomainEvent`, `buildAuditEvent`, `IRoleRepository`, `IAuditEventPublisher` |
 | Application | `ListRolesUseCase`, `CreateRoleUseCase`, `AssignRoleToUserUseCase` |
-| Infrastructure | `RolePgRepository`, `RabbitMQAuditPublisher`, rutas HTTP, OpenAPI |
+| Infrastructure | `RolePgRepository` (Drizzle + Postgres), `RabbitMQAuditPublisher`, rutas HTTP, OpenAPI |
 
 - **Swagger:** `http://localhost:5102/docs`
 
@@ -46,7 +46,7 @@ Cada microservicio sigue capas claras:
 |------|-----------|
 | Domain | `Conversation`, `Message`, `IConversationRepository`, `buildRagSystemPrompt`, `buildRagUserPrompt`, `RagContextDocument` |
 | Application | Casos de uso implícitos en el index (list/create/delete conversaciones, mensajes, RAG, imagen) |
-| Infrastructure | `ConversationPgRepository`, cliente OpenAI, Qdrant, rutas HTTP, OpenAPI |
+| Infrastructure | `ConversationPgRepository` (Drizzle + Postgres), cliente OpenAI, Qdrant, rutas HTTP, OpenAPI |
 
 - **Swagger:** `http://localhost:5104/docs`
 
@@ -62,7 +62,7 @@ Documenta todos los endpoints que expone el gateway hacia el frontend (auth, use
 # Compilar microservicios (TypeScript → JavaScript en services/dist/)
 npm run build:services
 
-# Con Docker, el Dockerfile.service compila y ejecuta los .js generados
+# Con Docker, cada servicio usa su Dockerfile dedicado
 docker compose up --build
 ```
 
@@ -72,5 +72,6 @@ Los contenedores arrancan los servicios desde `services/dist/<servicio>/index.js
 
 - **Bounded contexts:** Identity/Access (user, role), Audit, AI Assistant.
 - **Puertos y adaptadores:** Repositorios y publicadores definidos como interfaces en domain; la infraestructura los implementa.
+- **Autenticación distribuida:** gateway firma JWT internos y cada microservicio valida Bearer token con `JWT_SECRET` compartido.
 - **Eventos de dominio:** En role-service, `AuditDomainEvent` se publica de forma asíncrona vía RabbitMQ; audit-service los consume y persiste.
 - **Sin lógica de dominio en HTTP:** Las rutas solo validan entrada, llaman casos de uso y formatean respuestas.

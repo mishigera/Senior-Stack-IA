@@ -12,7 +12,7 @@ Microservicio del bounded context **AI Assistant**. Gestiona conversaciones, gen
 ## Estructura (DDD)
 
 - `domain/`: entidades/puertos de conversación y utilidades RAG.
-- `infrastructure/`: repositorio Postgres, OpenAPI y adaptadores externos.
+- `infrastructure/`: repositorio Postgres (Drizzle ORM), OpenAPI y adaptadores externos.
 - `lib/`: utilidades compartidas del servicio.
 - `index.ts`: composición, validación, HTTP y orquestación de integraciones.
 
@@ -21,7 +21,7 @@ Microservicio del bounded context **AI Assistant**. Gestiona conversaciones, gen
 | Método | Ruta | Descripción |
 |---|---|---|
 | GET | `/health` | Estado del servicio |
-| GET | `/conversations` | Lista conversaciones (requiere `x-actor-user-id`) |
+| GET | `/conversations` | Lista conversaciones (requiere `Authorization: Bearer <jwt>`) |
 | GET | `/conversations/:id` | Obtiene conversación + mensajes |
 | POST | `/conversations` | Crea conversación |
 | DELETE | `/conversations/:id` | Elimina conversación |
@@ -46,12 +46,13 @@ Swagger: `http://localhost:5104/docs`
 | `AI_CHAT_MODEL` | No | `gpt-4.1-mini` | Modelo para chat |
 | `AI_RAG_MODEL` | No | `gpt-4.1-mini` | Modelo para respuesta RAG |
 | `AI_EMBEDDING_MODEL` | No | `text-embedding-3-small` | Modelo de embeddings |
+| `JWT_SECRET` | Sí | `your-distributed-secret-key` | Validación de JWT distribuido |
 
 ## Comportamiento importante
 
 - Si `AI_INTEGRATIONS_OPENAI_API_KEY` no existe, endpoints de IA responden `503` de forma controlada.
 - Endpoints RAG requieren disponibilidad de Qdrant; si no está listo, responden `503`.
-- Todos los endpoints de negocio exigen `x-actor-user-id`.
+- Todos los endpoints de negocio exigen `Authorization: Bearer <jwt>`.
 
 ## Ejecución local (desde raíz del repositorio)
 
@@ -66,6 +67,7 @@ AI_INTEGRATIONS_OPENAI_BASE_URL=https://api.openai.com/v1 \
 AI_CHAT_MODEL=gpt-4.1-mini \
 AI_RAG_MODEL=gpt-4.1-mini \
 AI_EMBEDDING_MODEL=text-embedding-3-small \
+JWT_SECRET=change-me-jwt \
 AI_SERVICE_PORT=5104 \
 npx tsx services/ai-service/index.ts
 ```
@@ -78,6 +80,7 @@ DATABASE_URL=postgres://postgres:postgres@localhost:5433/senior_stack_ia \
 QDRANT_URL=http://localhost:6333 \
 QDRANT_COLLECTION=knowledge_base \
 AI_INTEGRATIONS_OPENAI_API_KEY=tu_api_key \
+JWT_SECRET=change-me-jwt \
 AI_SERVICE_PORT=5104 \
 node services/dist/ai-service/index.js
 ```

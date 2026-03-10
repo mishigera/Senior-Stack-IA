@@ -14,7 +14,7 @@ export const aiServiceOpenApi = {
     "/conversations": {
       get: {
         summary: "Listar conversaciones",
-        parameters: [{ name: "x-actor-user-id", in: "header", required: true, schema: { type: "string" } }],
+        parameters: [{ name: "Authorization", in: "header", required: true, schema: { type: "string" }, description: "Bearer JWT distribuido" }],
         responses: {
           "200": {
             description: "Lista",
@@ -26,7 +26,7 @@ export const aiServiceOpenApi = {
       },
       post: {
         summary: "Crear conversación",
-        parameters: [{ name: "x-actor-user-id", in: "header", required: true, schema: { type: "string" } }],
+        parameters: [{ name: "Authorization", in: "header", required: true, schema: { type: "string" }, description: "Bearer JWT distribuido" }],
         requestBody: { content: { "application/json": { schema: { type: "object", properties: { title: { type: "string" } } } } } },
         responses: { "201": { content: { "application/json": { schema: { $ref: "#/components/schemas/Conversation" } } } }, "401": {}, "500": {} },
       },
@@ -35,7 +35,7 @@ export const aiServiceOpenApi = {
       get: {
         summary: "Obtener conversación con mensajes",
         parameters: [
-          { name: "x-actor-user-id", in: "header", required: true, schema: { type: "string" } },
+          { name: "Authorization", in: "header", required: true, schema: { type: "string" }, description: "Bearer JWT distribuido" },
           { name: "id", in: "path", required: true, schema: { type: "integer" } },
         ],
         responses: {
@@ -48,7 +48,7 @@ export const aiServiceOpenApi = {
       delete: {
         summary: "Eliminar conversación",
         parameters: [
-          { name: "x-actor-user-id", in: "header", required: true, schema: { type: "string" } },
+          { name: "Authorization", in: "header", required: true, schema: { type: "string" }, description: "Bearer JWT distribuido" },
           { name: "id", in: "path", required: true, schema: { type: "integer" } },
         ],
         responses: { "204": {}, "401": {}, "500": {} },
@@ -58,7 +58,7 @@ export const aiServiceOpenApi = {
       post: {
         summary: "Enviar mensaje (streaming SSE)",
         parameters: [
-          { name: "x-actor-user-id", in: "header", required: true, schema: { type: "string" } },
+          { name: "Authorization", in: "header", required: true, schema: { type: "string" }, description: "Bearer JWT distribuido" },
           { name: "id", in: "path", required: true, schema: { type: "integer" } },
         ],
         requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["content"], properties: { content: { type: "string" } } } } } },
@@ -68,7 +68,7 @@ export const aiServiceOpenApi = {
     "/generate-image": {
       post: {
         summary: "Generar imagen (OpenAI)",
-        parameters: [{ name: "x-actor-user-id", in: "header", required: true, schema: { type: "string" } }],
+        parameters: [{ name: "Authorization", in: "header", required: true, schema: { type: "string" }, description: "Bearer JWT distribuido" }],
         requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["prompt"], properties: { prompt: { type: "string" }, size: { type: "string" } } } } } },
         responses: { "200": { content: { "application/json": { schema: { type: "object", properties: { url: {}, b64_json: {} } } } } }, "400": {}, "401": {}, "500": {}, "503": {} },
       },
@@ -76,7 +76,7 @@ export const aiServiceOpenApi = {
     "/rag/documents": {
       post: {
         summary: "Indexar documento para RAG",
-        parameters: [{ name: "x-actor-user-id", in: "header", required: true, schema: { type: "string" } }],
+        parameters: [{ name: "Authorization", in: "header", required: true, schema: { type: "string" }, description: "Bearer JWT distribuido" }],
         requestBody: {
           required: true,
           content: {
@@ -91,7 +91,7 @@ export const aiServiceOpenApi = {
     "/rag/query": {
       post: {
         summary: "Consulta RAG",
-        parameters: [{ name: "x-actor-user-id", in: "header", required: true, schema: { type: "string" } }],
+        parameters: [{ name: "Authorization", in: "header", required: true, schema: { type: "string" }, description: "Bearer JWT distribuido" }],
         requestBody: {
           required: true,
           content: {

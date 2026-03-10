@@ -3,12 +3,14 @@ import type { Server } from "http";
 import { Readable } from "stream";
 import { api } from "@shared/routes";
 import { z } from "zod";
+import jwt from "jsonwebtoken";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://user-service:5101";
 const ROLE_SERVICE_URL = process.env.ROLE_SERVICE_URL || "http://role-service:5102";
 const AUDIT_SERVICE_URL = process.env.AUDIT_SERVICE_URL || "http://audit-service:5103";
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || "http://ai-service:5104";
+const JWT_SECRET = process.env.JWT_SECRET || "your-distributed-secret-key";
 
 function getActorUserId(req: Request): string | undefined {
   const user = req.user as any;
@@ -55,8 +57,23 @@ function getActorHeader(req: Request): Record<string, string> | null {
     return null;
   }
 
+  const user = req.user as Record<string, unknown> | undefined;
+  const internalToken = jwt.sign(
+    {
+      sub: actorUserId,
+      username: typeof user?.username === "string" ? user.username : undefined,
+      scope: "internal:service",
+    },
+    JWT_SECRET,
+    {
+      expiresIn: "5m",
+      issuer: "api-gateway",
+      audience: "internal-microservices",
+    },
+  );
+
   return {
-    "x-actor-user-id": actorUserId,
+    Authorization: `Bearer ${internalToken}`,
   };
 }
 

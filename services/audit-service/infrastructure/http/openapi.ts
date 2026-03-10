@@ -36,7 +36,7 @@ export const auditServiceOpenApi = {
     "/audit-logs": {
       get: {
         summary: "Listar logs de auditoría",
-        parameters: [{ name: "x-actor-user-id", in: "header", required: true, schema: { type: "string" } }],
+        parameters: [{ name: "Authorization", in: "header", required: true, schema: { type: "string" }, description: "Bearer JWT distribuido" }],
         responses: {
           "200": {
             description: "Lista de eventos (últimos 500)",

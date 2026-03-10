@@ -20,7 +20,7 @@ Microservicio de auditoría del bounded context **Audit**. Consume eventos desde
 | Método | Ruta | Descripción |
 |---|---|---|
 | GET | `/health` | Estado del servicio (`consumerReady` incluido) |
-| GET | `/audit-logs` | Lista últimos logs (requiere `x-actor-user-id`) |
+| GET | `/audit-logs` | Lista últimos logs (requiere `Authorization: Bearer <jwt>`) |
 
 Swagger: `http://localhost:5103/docs`
 
@@ -33,6 +33,7 @@ Swagger: `http://localhost:5103/docs`
 | `RABBITMQ_URL` | No | `amqp://rabbitmq:5672` | Broker de eventos |
 | `AUDIT_EXCHANGE` | No | `audit.events` | Exchange topic |
 | `AUDIT_QUEUE` | No | `audit.logs` | Cola de consumo |
+| `JWT_SECRET` | Sí | `your-distributed-secret-key` | Validación de JWT distribuido |
 | `MONGODB_URL` | No | `mongodb://admin:admin@mongodb:27017` | Conexión Mongo |
 | `MONGODB_DB` | No | `senior_stack_ia` | Base Mongo |
 | `MONGODB_AUDIT_COLLECTION` | No | `audit_logs` | Colección de auditoría |
@@ -45,6 +46,7 @@ AUDIT_SERVICE_PORT=5103 \
 RABBITMQ_URL=amqp://localhost:5673 \
 AUDIT_EXCHANGE=audit.events \
 AUDIT_QUEUE=audit.logs \
+JWT_SECRET=change-me-jwt \
 MONGODB_URL=mongodb://admin:admin@localhost:27018 \
 MONGODB_DB=senior_stack_ia \
 MONGODB_AUDIT_COLLECTION=audit_logs \
@@ -59,6 +61,7 @@ AUDIT_SERVICE_PORT=5103 \
 RABBITMQ_URL=amqp://localhost:5673 \
 AUDIT_EXCHANGE=audit.events \
 AUDIT_QUEUE=audit.logs \
+JWT_SECRET=change-me-jwt \
 MONGODB_URL=mongodb://admin:admin@localhost:27018 \
 MONGODB_DB=senior_stack_ia \
 MONGODB_AUDIT_COLLECTION=audit_logs \

@@ -8,13 +8,33 @@ describe("RolePgRepository.assignRoleToUser", () => {
 
     await repository.assignRoleToUser("u-1", 2);
 
-    expect(query).toHaveBeenCalledTimes(1);
+    expect(query).toHaveBeenCalled();
 
-    const [sql, params] = query.mock.calls[0] as [string, unknown[]];
+    const calls = query.mock.calls as [unknown, unknown[]][];
+    const sqlText = calls
+      .map(([sql]) => {
+        if (typeof sql === "string") return sql;
+        if (sql && typeof sql === "object" && "text" in (sql as Record<string, unknown>)) {
+          return String((sql as Record<string, unknown>).text);
+        }
+        return String(sql);
+      })
+      .join("\n")
+      .toLowerCase();
 
-    expect(sql).toContain("WITH deleted AS");
-    expect(sql).toContain("DELETE FROM user_roles");
-    expect(sql).toContain("INSERT INTO user_roles");
-    expect(params).toEqual(["u-1", 2]);
+    expect(sqlText).toContain("delete from");
+    expect(sqlText).toContain("user_roles");
+    expect(sqlText).toContain("insert into");
+
+    const insertCall = calls.find(([sql]) => {
+      const text = typeof sql === "string"
+        ? sql
+        : (sql && typeof sql === "object" && "text" in (sql as Record<string, unknown>))
+          ? String((sql as Record<string, unknown>).text)
+          : "";
+      return text.toLowerCase().includes("insert into") && text.toLowerCase().includes("user_roles");
+    });
+
+    expect(insertCall?.[1]).toEqual(["u-1", 2]);
   });
 });

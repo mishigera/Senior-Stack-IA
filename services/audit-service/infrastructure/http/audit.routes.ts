@@ -1,15 +1,9 @@
-import type { Express, Request, Response } from "express";
+import type { Express } from "express";
 import type { ListAuditLogsUseCase } from "../../application/list-audit-logs.use-case.js";
+import { requireDistributedJwt } from "../../../lib/distributed-auth.js";
 
 const SOURCE = "audit-service";
-
-function requireActor(req: Request, res: Response, next: () => void): void {
-  if (!req.header("x-actor-user-id")) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
-  next();
-}
+const requireActor = requireDistributedJwt(SOURCE);
 
 export function registerAuditRoutes(
   app: Express,

@@ -1,44 +1,75 @@
 import type { Pool } from "pg";
+import { asc, eq } from "drizzle-orm";
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
+import { integer, pgTable, serial, text, varchar } from "drizzle-orm/pg-core";
 import type { IRoleRepository } from "../../domain/role.repository.js";
 import type { Role } from "../../domain/role.entity.js";
 
+const rolesTable = pgTable("roles", {
+  id: serial("id").primaryKey(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+});
+
+const userRolesTable = pgTable("user_roles", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  roleId: integer("role_id").notNull(),
+});
+
+const usersTable = pgTable("users", {
+  id: varchar("id").primaryKey(),
+});
+
 export class RolePgRepository implements IRoleRepository {
-  constructor(private readonly pool: Pool) {}
+  private readonly db: NodePgDatabase;
+
+  constructor(pool: Pool) {
+    this.db = drizzle(pool);
+  }
 
   async findAll(): Promise<Role[]> {
-    const result = await this.pool.query<Role & { description: string | null }>(
-      "SELECT id, name, description FROM roles ORDER BY id ASC",
-    );
-    return result.rows;
+    return this.db
+      .select({
+        id: rolesTable.id,
+        name: rolesTable.name,
+        description: rolesTable.description,
+      })
+      .from(rolesTable)
+      .orderBy(asc(rolesTable.id));
   }
 
   async create(name: string, description: string | null): Promise<Role> {
-    const result = await this.pool.query<Role & { description: string | null }>(
-      "INSERT INTO roles (name, description) VALUES ($1, $2) RETURNING id, name, description",
-      [name, description],
-    );
-    return result.rows[0]!;
+    const [role] = await this.db
+      .insert(rolesTable)
+      .values({ name, description })
+      .returning({
+        id: rolesTable.id,
+        name: rolesTable.name,
+        description: rolesTable.description,
+      });
+
+    if (!role) {
+      throw new Error("Failed to create role");
+    }
+
+    return role;
   }
 
   async assignRoleToUser(userId: string, roleId: number): Promise<void> {
-    await this.pool.query(
-      `
-      WITH deleted AS (
-        DELETE FROM user_roles
-        WHERE user_id = $1
-      )
-      INSERT INTO user_roles (user_id, role_id)
-      VALUES ($1, $2)
-      `,
-      [userId, roleId],
-    );
+    await this.db.transaction(async (tx) => {
+      await tx.delete(userRolesTable).where(eq(userRolesTable.userId, userId));
+      await tx.insert(userRolesTable).values({ userId, roleId });
+    });
   }
 
   async existsUser(userId: string): Promise<boolean> {
-    const result = await this.pool.query(
-      "SELECT 1 FROM users WHERE id = $1 LIMIT 1",
-      [userId],
-    );
-    return (result.rowCount ?? 0) > 0;
+    const [user] = await this.db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.id, userId))
+      .limit(1);
+
+    return !!user;
   }
 }
