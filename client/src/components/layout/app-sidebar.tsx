@@ -25,13 +25,17 @@ import {
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-const navigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Users", href: "/users", icon: Users },
-  { name: "Roles", href: "/roles", icon: Shield },
-  { name: "Audit Logs", href: "/audit", icon: ActivitySquare },
-  { name: "AI Agent", href: "/agent", icon: Bot },
+const navigationAll: { name: string; href: string; icon: any; roles: string[] | null }[] = [
+  { name: "Dashboard", href: "/", icon: LayoutDashboard, roles: null },
+  { name: "Users", href: "/users", icon: Users, roles: ["Admin", "Manager"] },
+  { name: "Roles", href: "/roles", icon: Shield, roles: ["Admin"] },
+  { name: "Audit Logs", href: "/audit", icon: ActivitySquare, roles: ["Admin", "Manager"] },
+  { name: "AI Agent", href: "/agent", icon: Bot, roles: null },
 ];
+function getNavigationForUser(roleNames: string[] | undefined) {
+  if (!roleNames?.length) return navigationAll.filter((i) => i.roles === null);
+  return navigationAll.filter((i) => i.roles === null || (i.roles && i.roles.some((r) => roleNames.includes(r))));
+}
 
 export function AppSidebar() {
   const [location] = useLocation();
@@ -58,7 +62,7 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="px-3 gap-1">
-              {navigation.map((item) => {
+              {getNavigationForUser(user?.roleNames).map((item) => {
                 const isActive = location === item.href;
                 return (
                   <SidebarMenuItem key={item.name}>
@@ -97,9 +101,9 @@ export function AppSidebar() {
             {state !== "collapsed" && (
               <div className="flex flex-col truncate">
                 <span className="text-sm font-medium leading-none truncate">
-                  {user.firstName ? `${user.firstName} ${user.lastName}` : user.email}
+                  {(user as { username?: string }).username ?? user.firstName ? `${user.firstName} ${user.lastName ?? ""}`.trim() : user.email}
                 </span>
-                <span className="text-xs text-muted-foreground truncate">{user.email}</span>
+                <span className="text-xs text-muted-foreground truncate">{user.email ?? (user as { username?: string }).username}</span>
               </div>
             )}
           </div>

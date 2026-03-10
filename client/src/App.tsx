@@ -1,4 +1,4 @@
-import { Switch, Route, Redirect } from "wouter";
+import { Switch, Route, Redirect, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -18,9 +18,16 @@ import AgentPage from "@/pages/agent";
 
 function ProtectedRoutes() {
   const { user, isLoading } = useAuth();
+  const [location] = useLocation();
 
   if (isLoading) return null; // handled by layout
   if (!user) return <Redirect to="/" />;
+
+  const roleNames = user.roleNames ?? [];
+  const canAccessUsersOrAudit = roleNames.some((r) => r === "Admin" || r === "Manager");
+  const canAccessRoles = roleNames.includes("Admin");
+  if ((location === "/users" || location === "/audit") && !canAccessUsersOrAudit) return <Redirect to="/" />;
+  if (location === "/roles" && !canAccessRoles) return <Redirect to="/" />;
 
   return (
     <ProtectedLayout>

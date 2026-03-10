@@ -45,12 +45,14 @@ export default function LandingPage() {
   }
 
   const onSubmit = async (values: z.infer<typeof authSchema>) => {
+    console.log("Submitting form with values:", values);
     try {
       const endpoint = isLogin ? "/api/login" : "/api/register";
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
+        credentials: "include",
       });
 
       if (!res.ok) {

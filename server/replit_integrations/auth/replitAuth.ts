@@ -111,7 +111,8 @@ export async function setupAuth(app: Express) {
 
       req.login(user, (err) => {
         if (err) return res.status(500).json({ message: "Login failed" });
-        res.status(201).json(user);
+        const { password: _p, ...safeUser } = user as { password?: string; [k: string]: unknown };
+        res.status(201).json(safeUser);
       });
     } catch (err) {
       res.status(500).json({ message: "Registration failed" });
@@ -145,6 +146,15 @@ export const isAuthenticated: RequestHandler = (req, res, next) => {
   passport.authenticate("jwt", { session: false }, (err: any, user: any) => {
     if (err || !user) return res.status(401).json({ message: "Unauthorized" });
     req.user = user;
+    next();
+  })(req, res, next);
+};
+
+/** No devuelve 401: si hay sesión o JWT válido pone req.user; si no, solo continúa. Para GET /api/auth/user. */
+export const optionalAuth: RequestHandler = (req, res, next) => {
+  if (req.isAuthenticated()) return next();
+  passport.authenticate("jwt", { session: false }, (err: any, user: any) => {
+    if (user) req.user = user;
     next();
   })(req, res, next);
 };
