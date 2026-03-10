@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useRoles, useCreateRole } from "@/hooks/use-roles";
+import { useRoles, useCreateRole, useAssignRole } from "@/hooks/use-roles";
+import { useAuth } from "@/hooks/use-auth";
 import { SectionTitle, SectionDescription, Card, PrimaryButton } from "@/components/ui-wrappers";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Loader2, Plus, ShieldAlert } from "lucide-react";
@@ -10,6 +11,8 @@ import { Label } from "@/components/ui/label";
 export default function RolesPage() {
   const { data: roles, isLoading } = useRoles();
   const createRoleMutation = useCreateRole();
+  const assignRoleMutation = useAssignRole();
+  const { user } = useAuth();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({ name: "", description: "" });
@@ -22,6 +25,11 @@ export default function RolesPage() {
         setFormData({ name: "", description: "" });
       }
     });
+  };
+
+  const handleSwitchProfile = (roleId: number) => {
+    if (!user?.id) return;
+    assignRoleMutation.mutate({ userId: user.id, roleId });
   };
 
   if (isLoading) {
@@ -55,6 +63,13 @@ export default function RolesPage() {
             <p className="text-sm text-muted-foreground flex-1">
               {role.description || "No description provided."}
             </p>
+            <PrimaryButton
+              onClick={() => handleSwitchProfile(role.id)}
+              disabled={!user?.id || assignRoleMutation.isPending}
+              className="mt-4"
+            >
+              {assignRoleMutation.isPending ? "Switching..." : "Use this profile"}
+            </PrimaryButton>
           </Card>
         ))}
 

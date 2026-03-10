@@ -43,6 +43,7 @@ export function useCreateRole() {
 }
 
 export function useAssignRole() {
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useMutation({
@@ -61,6 +62,8 @@ export function useAssignRole() {
       return res.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.invalidateQueries({ queryKey: [api.users.list.path] });
       toast({ title: "Success", description: "Role assigned to user successfully" });
     },
     onError: (error) => {

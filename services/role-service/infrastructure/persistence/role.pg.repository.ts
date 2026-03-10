@@ -22,7 +22,14 @@ export class RolePgRepository implements IRoleRepository {
 
   async assignRoleToUser(userId: string, roleId: number): Promise<void> {
     await this.pool.query(
-      "INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)",
+      `
+      WITH deleted AS (
+        DELETE FROM user_roles
+        WHERE user_id = $1
+      )
+      INSERT INTO user_roles (user_id, role_id)
+      VALUES ($1, $2)
+      `,
       [userId, roleId],
     );
   }
