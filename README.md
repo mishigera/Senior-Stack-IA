@@ -48,10 +48,18 @@ docker compose up --build
 ## Tests
 
 ```bash
-npm run test:all      # Backend + frontend (35 tests)
+npm run test:all      # Backend + frontend
 npm test              # Solo backend (node:test – 14 tests)
-npm run test:frontend # Solo frontend (vitest – 21 tests)
+npm run test:frontend # Solo frontend (vitest – 30 tests)
+npm run test:coverage # Cobertura backend + frontend (reportes en coverage/)
 ```
+
+- Cobertura: `npm run test:coverage`. Backend (c8) sobre `services/**/*.js`; frontend (Vitest) con umbral 70% en `client/src/lib`. Ver [docs/coverage-report.md](docs/coverage-report.md).
+
+## State management (front-end)
+
+- **TanStack React Query:** estado de servidor (usuarios, roles, auditoría, conversaciones, auth).
+- **Zustand:** estado de cliente/UI (p. ej. panel de conversaciones colapsado en la página Agent). Store: `client/src/store/ui-store.ts`.
 
 ## Microservicios (TypeScript + DDD)
 
