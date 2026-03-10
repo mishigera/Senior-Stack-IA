@@ -56,18 +56,18 @@ export default function UsersPage() {
                 <tr key={user.id} className="hover:bg-muted/20 transition-colors">
                   <td className="px-6 py-4">
                     {(() => {
-                      const name = (user as typeof user & { name?: string | null }).name;
+                      const username = (user as typeof user & { username?: string | null }).username;
 
                       return (
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={user.profileImageUrl || undefined} />
                         <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                          {(name || user.email)?.substring(0, 2).toUpperCase()}
+                          {(username || user.email)?.substring(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <span className="font-medium text-foreground">
-                        {name || 'No Name'}
+                        {username || 'No Name'}
                       </span>
                     </div>
                       );
