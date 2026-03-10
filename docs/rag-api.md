@@ -31,4 +31,4 @@ Incluye:
 
 - `answer`
 - `contextDocuments`
-- `metrics` (`latencyMs`, tokens prompt/completion/total)
+- `metrics` (`latencyMs`, tokens prompt/completion/total, `quality`: validación básica con `valid` y `checks`)

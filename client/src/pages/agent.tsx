@@ -1,11 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { useConversations, useConversation, useCreateConversation, useDeleteConversation, useChatStream } from "@/hooks/use-chat";
 import { SectionTitle, Card, PrimaryButton } from "@/components/ui-wrappers";
-import { MessageSquare, Plus, Send, Bot, User as UserIcon, Trash2, Loader2 } from "lucide-react";
+import { useUIStore } from "@/store/ui-store";
+import { MessageSquare, Plus, Send, Bot, User as UserIcon, Trash2, Loader2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function AgentPage() {
   const { data: conversations, isLoading: isConvosLoading } = useConversations();
+  const agentConversationsCollapsed = useUIStore((s) => s.agentConversationsCollapsed);
+  const toggleAgentConversationsCollapsed = useUIStore((s) => s.toggleAgentConversationsCollapsed);
   const [activeId, setActiveId] = useState<number | null>(null);
   const { data: activeConvo, isLoading: isChatLoading } = useConversation(activeId);
   const createMutation = useCreateConversation();
@@ -35,22 +38,41 @@ export default function AgentPage() {
 
   return (
     <div className="h-[calc(100vh-8rem)] flex gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Sidebar: Conversations */}
-      <Card className="w-80 flex flex-col p-4 shadow-sm">
-        <div className="flex items-center justify-between mb-6 px-2">
-          <h3 className="font-display font-bold text-lg flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-primary" /> Chats
-          </h3>
-          <button 
-            onClick={handleCreate}
-            disabled={createMutation.isPending}
-            className="p-2 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-          </button>
+      {/* Sidebar: Conversations (estado colapso en Zustand) */}
+      <Card className={cn(
+        "flex flex-col p-4 shadow-sm transition-all duration-200",
+        agentConversationsCollapsed ? "w-16 min-w-16" : "w-80 min-w-80"
+      )}>
+        <div className={cn(
+          "flex items-center mb-6 px-2",
+          agentConversationsCollapsed ? "flex-col gap-2 justify-center" : "justify-between"
+        )}>
+          {!agentConversationsCollapsed && (
+            <h3 className="font-display font-bold text-lg flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-primary" /> Chats
+            </h3>
+          )}
+          <div className={cn("flex", agentConversationsCollapsed ? "flex-col gap-1" : "gap-1")}>
+            <button
+              type="button"
+              onClick={toggleAgentConversationsCollapsed}
+              className="p-2 rounded-xl bg-muted hover:bg-muted/80 text-muted-foreground transition-colors"
+              title={agentConversationsCollapsed ? "Expandir panel" : "Colapsar panel"}
+            >
+              {agentConversationsCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+            </button>
+            <button
+              onClick={handleCreate}
+              disabled={createMutation.isPending}
+              className="p-2 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors"
+              title="Nueva conversación"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-2 pr-2">
+        <div className={cn("flex-1 overflow-y-auto space-y-2 pr-2", agentConversationsCollapsed && "hidden")}>
           {isConvosLoading && <div className="text-center py-4"><Loader2 className="h-5 w-5 animate-spin mx-auto text-primary" /></div>}
           
           {conversations?.map((c) => (

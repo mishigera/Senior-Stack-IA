@@ -7,7 +7,8 @@ Estado evaluado sobre el código actual del repositorio (marzo 2026).
 - **Listo para Docker:** ✅
 - **Microservicios en ejecución:** ✅ (gateway + 4 servicios de dominio)
 - **Integración IA + RAG funcional:** ✅
-- **Tests unitarios:** ✅ 35 tests (14 backend + 21 frontend)
+- **Tests unitarios:** ✅ 44 tests (14 backend + 30 frontend)
+- **Cobertura:** ✅ Reporte generado con `npm run test:coverage` (backend c8 ≥70%, frontend Vitest ≥70% en client/src/lib)
 - **Seguridad OWASP:** ✅ (scrypt hashing, sin password leak, validación de inputs)
 - **Cumplimiento global de la prueba:** ✅
 
@@ -48,12 +49,8 @@ Estado evaluado sobre el código actual del repositorio (marzo 2026).
 
 ### Cumple
 - React + TypeScript (Vite).
-- State management con TanStack React Query (server state).
-- Integración con gateway (que orquesta microservicios users/roles/audit/ai).
-- Estados de carga (loading spinners) y errores (toasts) en hooks/páginas.
-- Validación de formularios con Zod + react-hook-form.
-- Feedback visual al usuario (toasts, estados de pending en mutaciones).
-- Tests frontend con Vitest + Testing Library (21 tests).
+- State management: **TanStack React Query** (server state) + **Zustand** (client/UI state, p. ej. panel colapsado en Agent). Store en `client/src/store/ui-store.ts`.
+- Tests frontend con Vitest + Testing Library (30 tests).
 - Ejecución dockerizada conjunta con backend/microservicios.
 
 ---
@@ -92,10 +89,19 @@ Estado evaluado sobre el código actual del repositorio (marzo 2026).
 - `rag-prompt.test.mjs` – prompts de sistema y usuario RAG
 - `rag-prompt-edge.test.mjs` – edge cases (vacío, múltiples contextos, uno solo)
 
-### Frontend (Vitest) – 21 tests
+### Frontend (Vitest) – 30 tests
 - `utils.test.ts` – utilidad `cn()` y `buildUrl()`
-- `query-client.test.ts` – `apiRequest` (GET/POST/errores/credenciales)
+- `query-client.test.ts` – `apiRequest`, `getQueryFn` (GET/POST/401/200)
+- `auth-utils.test.ts` – `isUnauthorizedError`, `redirectToLogin`
 - `api-schemas.test.ts` – validación de schemas Zod de API
+
+### Cobertura
+```bash
+npm run test:coverage           # Backend + frontend, genera reportes
+npm run test:coverage:backend   # c8 sobre services/**/*.js (≥70%)
+npm run test:coverage:frontend # Vitest sobre client (≥70% en client/src/lib)
+```
+Reportes: `coverage/backend/` (lcov, text-summary), `coverage/frontend/` (html, lcov).
 
 ### Ejecución
 ```bash

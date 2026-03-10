@@ -106,7 +106,7 @@ export const aiServiceOpenApi = {
               "application/json": {
                 schema: {
                   type: "object",
-                  properties: { answer: {}, contextDocuments: {}, metrics: { type: "object", properties: { latencyMs: {}, tokens: {} } } },
+                  properties: { answer: {}, contextDocuments: {}, metrics: { type: "object", properties: { latencyMs: {}, tokens: {}, quality: { type: "object", properties: { valid: { type: "boolean" }, checks: {} } } } } },
                 },
               },
             },

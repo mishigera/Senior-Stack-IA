@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, getQueryFn } from "@/lib/queryClient";
 
 describe("apiRequest", () => {
   beforeEach(() => {
@@ -57,5 +57,44 @@ describe("apiRequest", () => {
 
     const call = vi.mocked(fetch).mock.calls[0];
     expect(call[1]?.credentials).toBe("include");
+  });
+});
+
+describe("getQueryFn", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("returns null on 401 when on401 is returnNull", async () => {
+    const mockResponse = new Response("Unauthorized", { status: 401 });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(mockResponse);
+
+    const fn = getQueryFn<{ id: number }>({ on401: "returnNull" });
+    const result = await fn({ queryKey: ["/api/me"], signal: new AbortController().signal } as any);
+
+    expect(result).toBeNull();
+  });
+
+  it("returns JSON on 200", async () => {
+    const mockResponse = new Response(JSON.stringify({ id: 1, name: "Test" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(mockResponse);
+
+    const fn = getQueryFn<{ id: number; name: string }>({ on401: "throw" });
+    const result = await fn({ queryKey: ["/api/me"], signal: new AbortController().signal } as any);
+
+    expect(result).toEqual({ id: 1, name: "Test" });
+  });
+
+  it("throws on 401 when on401 is throw", async () => {
+    const mockResponse = new Response("Unauthorized", { status: 401 });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(mockResponse);
+
+    const fn = getQueryFn({ on401: "throw" });
+    await expect(
+      fn({ queryKey: ["/api/me"], signal: new AbortController().signal } as any),
+    ).rejects.toThrow("401");
   });
 });

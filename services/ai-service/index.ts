@@ -7,6 +7,7 @@ import { QdrantClient } from "@qdrant/js-client-rest";
 import swaggerUi from "swagger-ui-express";
 import { ConversationPgRepository } from "./infrastructure/persistence/conversation.pg.repository.js";
 import { buildRagSystemPrompt, buildRagUserPrompt, type RagContextDocument } from "./domain/rag-prompt.js";
+import { validateRagResponse } from "./domain/rag-response-quality.js";
 import { aiServiceOpenApi } from "./infrastructure/http/openapi.js";
 
 const SOURCE = "ai-service";
@@ -283,6 +284,7 @@ app.post("/rag/query", requireActor, async (req, res) => {
         ? (answerContent as Array<{ text?: string }>).map((item) => item?.text ?? "").join("\n")
         : "";
     const latencyMs = Date.now() - startedAt;
+    const quality = validateRagResponse(answer, contextDocuments);
     res.status(200).json({
       answer,
       contextDocuments,
@@ -292,6 +294,10 @@ app.post("/rag/query", requireActor, async (req, res) => {
           prompt: completion.usage?.prompt_tokens ?? null,
           completion: completion.usage?.completion_tokens ?? null,
           total: completion.usage?.total_tokens ?? null,
+        },
+        quality: {
+          valid: quality.valid,
+          checks: quality.checks,
         },
       },
     });

@@ -12,6 +12,9 @@
     "test": "node --test tests/**/*.test.mjs",
     "test:frontend": "vitest run --config vitest.config.ts",
     "test:all": "node --test tests/**/*.test.mjs && vitest run --config vitest.config.ts",
+    "test:coverage": "npm run test:coverage:backend && npm run test:coverage:frontend",
+    "test:coverage:backend": "c8 --reporter=lcov --reporter=text-summary --report-dir=coverage/backend --include=services/**/*.js --check-coverage --lines 70 --statements 70 --functions 70 --branches 70 node --test tests/microservices/*.test.mjs",
+    "test:coverage:frontend": "vitest run --config vitest.config.ts --coverage",
     "build:services": "tsc -p services/tsconfig.json",
     "docker:up": "docker compose up --build",
     "docker:down": "docker compose down --remove-orphans"
@@ -92,7 +95,8 @@
     "wouter": "^3.3.5",
     "ws": "^8.18.0",
     "zod": "^3.25.76",
-    "zod-validation-error": "^3.5.4"
+    "zod-validation-error": "^3.5.4",
+    "zustand": "^5.0.11"
   },
   "devDependencies": {
     "@replit/vite-plugin-cartographer": "^0.4.4",
@@ -117,7 +121,9 @@
     "@types/swagger-ui-express": "^4.1.8",
     "@types/ws": "^8.5.13",
     "@vitejs/plugin-react": "^4.7.0",
+    "@vitest/coverage-v8": "^4.0.18",
     "autoprefixer": "^10.4.20",
+    "c8": "^10.1.2",
     "drizzle-kit": "^0.31.8",
     "esbuild": "^0.25.0",
     "jsdom": "^28.1.0",

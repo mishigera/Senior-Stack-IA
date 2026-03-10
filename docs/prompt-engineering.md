@@ -44,8 +44,9 @@ Respuesta de `/api/rag/query` incluye:
 - `metrics.tokens.prompt`
 - `metrics.tokens.completion`
 - `metrics.tokens.total`
+- `metrics.quality`: validación básica de calidad (`valid`, `checks`: nonEmpty, minLength, hasRelevantLength, usedContextWhenAvailable). Implementación: `services/ai-service/domain/rag-response-quality.ts`.
 
-Estas métricas permiten monitorear latencia y costo de tokens por solicitud.
+Estas métricas permiten monitorear latencia, costo de tokens y calidad de respuesta por solicitud.
 
 ## Buenas prácticas aplicadas
 
