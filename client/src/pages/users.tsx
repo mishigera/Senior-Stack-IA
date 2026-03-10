@@ -55,17 +55,23 @@ export default function UsersPage() {
               {users?.map((user) => (
                 <tr key={user.id} className="hover:bg-muted/20 transition-colors">
                   <td className="px-6 py-4">
+                    {(() => {
+                      const name = (user as typeof user & { name?: string | null }).name;
+
+                      return (
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={user.profileImageUrl || undefined} />
                         <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                          {(user.firstName || user.email)?.substring(0, 2).toUpperCase()}
+                          {(name || user.email)?.substring(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <span className="font-medium text-foreground">
-                        {user.firstName ? `${user.firstName} ${user.lastName}` : 'No Name'}
+                        {name || 'No Name'}
                       </span>
                     </div>
+                      );
+                    })()}
                   </td>
                   <td className="px-6 py-4 text-muted-foreground">{user.email}</td>
                   <td className="px-6 py-4 text-muted-foreground">
